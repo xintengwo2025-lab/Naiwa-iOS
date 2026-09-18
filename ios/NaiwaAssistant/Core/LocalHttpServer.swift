@@ -15,7 +15,7 @@ class LocalHttpServer {
         server.addGETHandler(forBasePath: "/", directoryPath: htmlRoot, indexFilename: "index.html", cacheAge: 0, allowRangeRequests: true)
 
         // 自定义 API 路由与代理拦截
-        server.addHandler(forMethod: "GET", pathRegex: "/api/.*") { request in
+        server.addHandler(forMethod: "GET", pathRegex: "/api/.*", request: GCDWebServerRequest.self) { request in
             let path = request.path
             // 简单的 mock 或重定向响应处理
             let response = GCDWebServerDataResponse(jsonObject: ["status": "ok", "path": path])
@@ -55,9 +55,9 @@ extension LocalHttpServer {
     static func createHtmlResponse(html: String) -> GCDWebServerDataResponse? {
         guard let data = html.data(using: .utf8) else { return nil }
         let response = GCDWebServerDataResponse(data: data, contentType: "text/html; charset=utf-8")
-        response?.statusCode = 200
-        response?.setValue("*", forAdditionalHeader: "Access-Control-Allow-Origin")
-        response?.setValue("no-cache", forAdditionalHeader: "Cache-Control")
+        response.statusCode = 200
+        response.setValue("*", forAdditionalHeader: "Access-Control-Allow-Origin")
+        response.setValue("no-cache", forAdditionalHeader: "Cache-Control")
         return response
     }
 

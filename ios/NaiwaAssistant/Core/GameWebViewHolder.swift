@@ -693,8 +693,8 @@ final class GameWebViewHolder: NSObject {
             return
         }
 
-        fetchOrCreateAlbum(named: "再攀之王") { [weak self] album in
-            guard let self = self, let album = album else {
+        fetchOrCreateAlbum(named: "再攀之王") { album in
+            guard let album = album else {
                 try? FileManager.default.removeItem(at: tmp)
                 return
             }

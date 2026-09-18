@@ -11,3 +11,14 @@ target 'NaiwaAssistant' do
   pod 'GCDWebServer', '~> 3.0'
 
 end
+
+# Xcode 16 移除了 libarclite，而 GCDWebServer 的 podspec 最低部署目标是 iOS 8.0，
+# 直接编译会报 "SDK does not contain 'libarclite'"。
+# 这里把所有 Pods 目标的最低部署目标统一提到 14.0，与应用保持一致。
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
+    end
+  end
+end

@@ -1,0 +1,60 @@
+# XcodeGen 工程描述文件
+#
+# 在 ios/ 目录下的标准构建流程：
+#   1. xcodegen generate
+#        根据本文件生成 NaiwaAssistant.xcodeproj
+#   2. pod install
+#        安装 GCDWebServer，并把 Pods 集成进工程，生成 NaiwaAssistant.xcworkspace
+#   3. xcodebuild -workspace NaiwaAssistant.xcworkspace -scheme NaiwaAssistant ...
+#
+# 注意：每次改动 project.yml 或 Podfile 后，都需要重新执行
+#       xcodegen generate && pod install。
+#
+# CI（GitHub Actions）构建模拟器包时，可用 CODE_SIGNING_ALLOWED=NO 跳过签名：
+#   xcodebuild -workspace NaiwaAssistant.xcworkspace -scheme NaiwaAssistant \
+#     -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+
+name: NaiwaAssistant
+
+options:
+  bundleIdPrefix: com.sharkking
+  deploymentTarget:
+    iOS: "14.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "14.0"
+
+targets:
+  NaiwaAssistant:
+    type: application
+    platform: iOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: NaiwaAssistant
+        excludes:
+          - Info.plist
+    info:
+      path: NaiwaAssistant/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sharkking.assistant
+        INFOPLIST_FILE: NaiwaAssistant/Info.plist
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "5.0"
+        CODE_SIGN_STYLE: Automatic
+        # 真机构建需填入你的开发者团队 ID；模拟器/CI 构建可留空
+        DEVELOPMENT_TEAM: ""
+
+schemes:
+  NaiwaAssistant:
+    build:
+      targets:
+        NaiwaAssistant: all
+    run:
+      config: Debug
+    archive:
+      config: Release

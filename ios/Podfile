@@ -1,0 +1,13 @@
+# Uncomment the next line to define a global platform for your project
+# 最低版本由 CryptoKit（iOS 13+）与 Photos `.limited`（iOS 14+）决定，取 14.0
+platform :ios, '14.0'
+
+target 'NaiwaAssistant' do
+  # Comment the next line if you don't want to use dynamic frameworks
+  use_frameworks!
+
+  # Pods for NaiwaAssistant
+  # GCDWebServer：本地 HTTP 伺服（LocalHttpServer.swift 的依赖）
+  pod 'GCDWebServer', '~> 3.0'
+
+end

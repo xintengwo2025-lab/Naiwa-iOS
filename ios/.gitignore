@@ -1,0 +1,15 @@
+# ---- Xcode / XcodeGen 生成的工程与工作区（由 project.yml / pod install 生成，不入库）----
+NaiwaAssistant.xcodeproj/
+NaiwaAssistant.xcworkspace/
+xcuserdata/
+DerivedData/
+
+# ---- CocoaPods ----
+Pods/
+# Podfile.lock 建议提交以锁定依赖版本（可复现构建）。
+# 若不在 macOS 上跑 pod install、无法本地生成，可先不提交，由 CI 首次生成。
+
+# ---- 构建与打包产物 ----
+build/
+*.ipa
+Payload/

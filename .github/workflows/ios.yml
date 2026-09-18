@@ -1,0 +1,83 @@
+name: Build Unsigned iOS IPA
+
+# 触发方式：手动触发，或推送到 main/master 分支
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build-unsigned-ipa:
+    name: Build unsigned IPA (device)
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Install CocoaPods
+        run: brew install cocoapods
+
+      # 缓存 Pods，避免每次重下依赖。
+      # key 优先用 Podfile.lock 的哈希；lock 尚未提交（首次运行）时回退到
+      # Podfile 的哈希，保证缓存 key 稳定、可命中，两种情况下都不会抖动。
+      - name: Cache Pods
+        uses: actions/cache@v4
+        with:
+          path: ios/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') || hashFiles('ios/Podfile') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+
+      # 先由 XcodeGen 生成 .xcodeproj，再由 pod install 集成 GCDWebServer 并生成 .xcworkspace
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Install Pods
+        working-directory: ios
+        run: pod install
+
+      # 真机（device）构建，关闭签名，产出无签名的 .app，供全能签等工具重签后安装
+      - name: Build device app (unsigned)
+        working-directory: ios
+        run: |
+          xcodebuild \
+            -workspace NaiwaAssistant.xcworkspace \
+            -scheme NaiwaAssistant \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      # 打包成标准 IPA，并带上版本号命名：
+      #   NaiwaAssistant-<CFBundleShortVersionString>-build<CFBundleVersion>.ipa
+      - name: Package into Payload and zip IPA (versioned)
+        working-directory: ios
+        run: |
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" NaiwaAssistant/Info.plist)
+          BUILD=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" NaiwaAssistant/Info.plist)
+          IPA_NAME="NaiwaAssistant-${VERSION}-build${BUILD}.ipa"
+          echo "IPA_NAME=${IPA_NAME}" >> "$GITHUB_ENV"
+          APP_DIR="build/Build/Products/Release-iphoneos/NaiwaAssistant.app"
+          rm -rf Payload
+          mkdir -p Payload
+          cp -R "$APP_DIR" Payload/
+          zip -r -y "$IPA_NAME" Payload
+          ls -la "$IPA_NAME"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NaiwaAssistant-unsigned
+          path: ios/${{ env.IPA_NAME }}
+          retention-days: 14
